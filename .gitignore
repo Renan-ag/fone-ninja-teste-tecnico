@@ -1,5 +1,10 @@
 *.log
 .DS_Store
+docker/mysql/data/
+docker/postgres/data/
+docker/mongodb/data/
+*.log
+docker/**/tmp/
 .env
 .env.backup
 .env.production
