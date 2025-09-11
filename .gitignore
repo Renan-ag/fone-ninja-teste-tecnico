@@ -1,6 +1,6 @@
 *.log
 .DS_Store
-docker/mysql/data/
+docker/mysql/*
 docker/postgres/data/
 docker/mongodb/data/
 *.log

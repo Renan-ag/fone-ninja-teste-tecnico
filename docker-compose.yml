@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+    mysql:
+        image: mysql:8.0
+        container_name: mysql_fone_ninja
+        restart: always
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: fone_ninja
+            MYSQL_USER: fone_ninja
+            MYSQL_PASSWORD: secret
+        volumes:
+            - ./docker/mysql:/var/lib/mysql
+            
+    phpmyadmin:
+          image: phpmyadmin/phpmyadmin
+          container_name: phpmyadmin
+          restart: always
+          ports:
+            - "8080:80"
+          environment:
+            PMA_HOST: mysql
+            PMA_USER: fone_ninja
+            PMA_PASSWORD: secret
