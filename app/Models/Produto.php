@@ -9,11 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Produto extends Model
 {
     use HasFactory, SoftDeletes;
-
-    // Define a tabela associada ao modelo
+    
     protected $table = 'produtos';
-
-    // Define os campos que podem ser preenchidos em massa
+    
     protected $fillable = [
         'nome',
         'descricao',
@@ -23,8 +21,7 @@ class Produto extends Model
         'estoque',
         'ativo',
     ];
-
-    // Define os campos que devem ser tratados como tipos específicos
+    
     protected $casts = [
         'ativo' => 'boolean',
         'custo_medio' => 'decimal:2',
@@ -33,10 +30,14 @@ class Produto extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
-
-    // Define o relacionamento com a tabela 'categorias'
+    
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'categoria_id', 'id');
+    }
+
+    public function compras()
+    {
+        return $this->hasMany(CompraProduto::class, 'produto_id', 'id');
     }
 }
