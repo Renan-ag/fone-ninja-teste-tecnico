@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 abstract class Controller
 {
@@ -139,6 +140,40 @@ abstract class Controller
     $resources = $query->paginate($perPage);
 
     return $this->successResponse($resources, 'Recursos listados com sucesso');
+  }
+
+  /**
+   * Store a new resource
+   */
+  public function store(Request $request): JsonResponse
+  {
+    try {
+      // Validate the request data
+      $validator = Validator::make($request->all(), $this->validationRules);
+
+      if ($validator->fails()) {
+        return $this->errorResponse(
+          $validator->errors(),
+          422
+        );
+      }
+
+      // Create the resource
+      $resource = $this->model::create($request->all());
+
+      // Load relationships if any
+      if (!empty($this->relationships)) {
+        $resource->load($this->relationships);
+      }
+
+      return $this->successResponse(
+        $resource,
+        'Recurso criado com sucesso',
+        201
+      );
+    } catch (\Exception $e) {
+      return $this->handleException($e);
+    }
   }
 
   /**
