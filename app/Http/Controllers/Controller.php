@@ -134,7 +134,7 @@ abstract class Controller
    */
   public function index(Request $request): JsonResponse
   {
-    $perPage = $request->input('per_page', 15);
+    $perPage = $request->input('per_page', 12);
     $query = $this->model::query()->with($this->relationships);
 
     $resources = $query->paginate($perPage);
