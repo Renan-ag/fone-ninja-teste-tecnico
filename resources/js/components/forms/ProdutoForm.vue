@@ -64,6 +64,7 @@
                 v-model="form.custo_medio"
                 type="number"
                 label="Custo Médio"
+                :disabled="modo === 'edit'"
                 prefix="R$"
                 :rules="[
                     (v) => !!v || 'Custo Médio é obrigatório',
@@ -76,6 +77,7 @@
                 v-model="form.estoque"
                 label="Estoque"
                 type="number"
+                :disabled="modo === 'edit'"
                 :rules="[
                     (v) => !!v || 'Estoque é obrigatório',
                     (v) => v >= 0 || 'Estoque deve ser maior ou igual a zero',

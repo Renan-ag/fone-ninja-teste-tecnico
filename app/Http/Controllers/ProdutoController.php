@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produto;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class ProdutoController extends Controller
 {
@@ -21,5 +23,17 @@ class ProdutoController extends Controller
   public function __construct(Produto $produto)
   {
     parent::__construct($produto);
+  }
+
+  public function update(Request $request, $id): JsonResponse
+  {
+    try {
+      $resource = $this->model::findOrFail($id);
+      $resource->update($request->except(["custo_medio", "estoque"]));
+      $resource->load($this->relationships);
+      return $this->successResponse($resource, 'Recurso atualizado com sucesso');
+    } catch (\Exception $e) {
+      return $this->handleException($e);
+    }
   }
 }
