@@ -13,6 +13,7 @@ abstract class Controller
 {
   protected $model;
   protected $validationRules = [];
+  protected $customMessages = [];
   protected $relationships = [];
 
   public function __construct(Model $model)
@@ -149,7 +150,7 @@ abstract class Controller
   {
     try {
       // Validate the request data
-      $validator = Validator::make($request->all(), $this->validationRules);
+      $validator = Validator::make($request->all(), $this->validationRules, $this->customMessages);
 
       if ($validator->fails()) {
         return $this->errorResponse(

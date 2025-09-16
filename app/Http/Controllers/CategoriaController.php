@@ -14,6 +14,11 @@ class CategoriaController extends Controller
     'ativo' => 'boolean',
   ];
 
+  protected $customMessages = [
+    'nome.required' => 'O nome é obrigatório',
+    'nome.max' => 'O nome deve ter no máximo 255 caracteres',
+  ];
+
   protected $relationships = [];
 
   public function __construct(Categoria $categoria)

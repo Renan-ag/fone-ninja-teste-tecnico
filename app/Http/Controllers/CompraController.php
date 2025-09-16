@@ -26,6 +26,15 @@ class CompraController extends Controller
     'produtos.*.preco_unitario' => 'required|numeric|min:0',
   ];
 
+  protected $customMessages = [
+    'fornecedor_id.required' => 'O fornecedor é obrigatório',
+    'total.required' => 'O total é obrigatório',
+    'produtos.required' => 'Os produtos são obrigatórios',
+    'produtos.*.produto_id.required' => 'O produto é obrigatório',
+    'produtos.*.quantidade.required' => 'A quantidade é obrigatória',
+    'produtos.*.preco_unitario.required' => 'O preço unitário é obrigatório',
+  ];
+
   protected $relationships = ['fornecedor', 'compraProdutos.produto'];
 
   public function __construct()

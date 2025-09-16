@@ -15,7 +15,7 @@
             ref="form"
             v-model="valid"
             lazy-validation
-            class="form-container grid grid-cols-2 gap-2"
+            class="form-container flex flex-col md:grid md:grid-cols-2 gap-2"
         >
             <v-text-field
                 v-model="form.nome"
@@ -26,6 +26,7 @@
                         v.length <= 150 ||
                         'O nome deve ter no máximo 150 caracteres',
                 ]"
+                :error-messages="api_error?.nome"
                 required
                 outlined
             />
@@ -47,6 +48,7 @@
                 prepend-inner-icon="mdi-magnify"
                 @update:search-input="debouncedSearch"
                 @update:search="debouncedSearch"
+                :error-messages="api_error?.categoria_id"
             />
             <v-text-field
                 v-model="form.preco_venda"
@@ -57,6 +59,7 @@
                     (v) => !!v || 'Preço é obrigatório',
                     (v) => v > 0 || 'Preço deve ser maior que zero',
                 ]"
+                :error-messages="api_error?.preco_venda"
                 required
                 outlined
             />
@@ -70,6 +73,7 @@
                     (v) => !!v || 'Custo Médio é obrigatório',
                     (v) => v > 0 || 'Custo Médio deve ser maior que zero',
                 ]"
+                :error-messages="api_error?.custo_medio"
                 required
                 outlined
             />
@@ -82,6 +86,7 @@
                     (v) => !!v || 'Estoque é obrigatório',
                     (v) => v >= 0 || 'Estoque deve ser maior ou igual a zero',
                 ]"
+                :error-messages="api_error?.estoque"
                 required
                 outlined
             />
@@ -89,6 +94,7 @@
                 v-model="form.descricao"
                 class="col-span-2"
                 label="Descrição"
+                :error-messages="api_error?.descricao"
                 required
                 outlined
             />
@@ -97,12 +103,13 @@
                 :true-value="1"
                 :false-value="0"
                 :label="`Status: ${form.ativo == 1 ? 'Ativo' : 'Inativo'}`"
+                :error-messages="api_error?.ativo"
             ></v-switch>
         </v-form>
 
         <div class="flex flex-col md:flex-row gap-2 justify-end">
             <v-btn color="grey" text @click="$emit('cancelar')">Cancelar</v-btn>
-            <v-btn color="primary" :disabled="!valid || loading" @click="salvar"
+            <v-btn color="primary" :disabled="loading" @click="salvar"
                 >Salvar</v-btn
             >
         </div>
@@ -115,7 +122,6 @@ import { parsePreco } from "@/utils/parsers";
 import CategoriaService from "@/services/CategoriaService";
 import ProdutoService from "@/services/ProdutoService";
 import debounce from "lodash/debounce";
-import { handleApiFormErrors } from "../../utils/handleApiErrors";
 
 export default {
     props: {
@@ -136,7 +142,7 @@ export default {
             loadingCategorias: false,
             searchCategoria: null,
             categorias: [],
-            api_error: null,
+            api_error: {},
             form: {
                 id: null,
                 nome: "",
@@ -253,8 +259,10 @@ export default {
                         } produto:`,
                         error
                     );
-                    const errorKeys = Object.keys(error.response.data.errors);
-                    this.api_error = handleApiFormErrors(errorKeys[0]);
+                    if (error.response.data.errors) {
+                        s;
+                        this.api_error = error.response.data.errors;
+                    }
                     this.$emit("erro", error);
                 } finally {
                     this.loading = false;

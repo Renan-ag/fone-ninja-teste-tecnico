@@ -9,13 +9,24 @@ use Illuminate\Http\JsonResponse;
 class ProdutoController extends Controller
 {
   protected $validationRules = [
-    'nome' => 'required|string|max:255|min:3',
+    'nome' => 'required|string|max:255|min:3|unique:produtos,nome',
     'descricao' => 'nullable|string',
     'categoria_id' => 'required|exists:categorias,id',
     'custo_medio' => 'required|numeric|min:0',
     'preco_venda' => 'required|numeric|min:0',
     'estoque' => 'nullable|integer|min:0',
     'ativo' => 'boolean',
+  ];
+
+  protected $customMessages = [
+    'nome.required' => 'O nome é obrigatório',
+    'descricao.required' => 'A descrição é obrigatória',
+    'categoria_id.required' => 'A categoria é obrigatória',
+    'custo_medio.required' => 'O custo médio é obrigatório',
+    'preco_venda.required' => 'O preço de venda é obrigatório',
+    'estoque.required' => 'O estoque é obrigatório',
+    'ativo.required' => 'O status é obrigatório',
+    'nome.unique' => 'O nome do produto já existe',
   ];
 
   protected $relationships = ['categoria'];

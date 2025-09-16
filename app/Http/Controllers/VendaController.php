@@ -23,6 +23,16 @@ class VendaController extends Controller
     'produtos.*.preco_unitario' => 'required|numeric|min:0',
   ];
 
+  protected $customMessages = [
+    'cliente.required' => 'O cliente é obrigatório',
+    'total.required' => 'O total é obrigatório',
+    'status.required' => 'O status é obrigatório',
+    'produtos.required' => 'Os produtos são obrigatórios',
+    'produtos.*.produto_id.required' => 'O produto é obrigatório',
+    'produtos.*.quantidade.required' => 'A quantidade é obrigatória',
+    'produtos.*.preco_unitario.required' => 'O preço unitário é obrigatório',
+  ];
+
   protected $relationships = ['vendaProdutos.produto'];
 
   public function __construct()

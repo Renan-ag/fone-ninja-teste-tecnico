@@ -21,12 +21,14 @@
                         v.length <= 150 ||
                         'O nome deve ter no máximo 150 caracteres',
                 ]"
+                :error-messages="api_error?.nome"
                 required
                 outlined
             />
             <v-text-field v-model="form.descricao" label="Descrição" outlined />
             <v-switch
                 v-model="form.ativo"
+                :error-messages="api_error?.ativo"
                 :true-value="1"
                 :false-value="0"
                 :label="`Status: ${form.ativo == 1 ? 'Ativo' : 'Inativo'}`"
@@ -35,7 +37,7 @@
 
         <div class="flex flex-col md:flex-row gap-2 justify-end">
             <v-btn color="grey" text @click="$emit('cancelar')">Cancelar</v-btn>
-            <v-btn color="primary" :disabled="!valid" @click="salvar"
+            <v-btn color="primary" :disabled="loading" @click="salvar"
                 >Salvar</v-btn
             >
         </div>
@@ -43,8 +45,7 @@
 </template>
 
 <script>
-import CategoriaService from "@/services/CategoriaService"; // Ajuste o caminho conforme necessário
-import { handleApiFormErrors } from "../../utils/handleApiErrors";
+import CategoriaService from "@/services/CategoriaService";
 
 export default {
     props: {
@@ -69,6 +70,7 @@ export default {
                 descricao: "",
             },
             loading: false,
+            api_error: {},
         };
     },
     watch: {
@@ -110,8 +112,9 @@ export default {
                         } categoria:`,
                         error
                     );
-                    const errorKeys = Object.keys(error.response.data.errors);
-                    this.api_error = handleApiFormErrors(errorKeys[0]);
+                    if (error.response.data.errors) {
+                        this.api_error = error.response.data.errors;
+                    }
                     this.$emit("erro", error);
                 } finally {
                     this.loading = false;
