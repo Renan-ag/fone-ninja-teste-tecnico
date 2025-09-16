@@ -53,15 +53,31 @@
         </v-data-table>
 
         <!-- Dialog para visualização -->
-        <v-dialog v-model="dialogVisualizar" max-width="500px">
+        <v-dialog v-model="dialogVisualizar" max-width="640px">
             <v-card>
                 <v-card-title>Detalhes da Categoria</v-card-title>
-                <v-card-text>
+                <v-card-text class="flex flex-col gap-3">
                     <p><strong>ID:</strong> {{ selectedItem.id }}</p>
                     <p><strong>Nome:</strong> {{ selectedItem.nome }}</p>
                     <p>
                         <strong>Status:</strong>
                         {{ selectedItem.ativo == 1 ? "Ativo" : "Inativo" }}
+                    </p>
+                    <p>
+                        <strong>Data de Criação:</strong>
+                        {{
+                            new Date(
+                                selectedItem.created_at
+                            ).toLocaleDateString()
+                        }}
+                    </p>
+                    <p>
+                        <strong>Data de Atualização:</strong>
+                        {{
+                            new Date(
+                                selectedItem.updated_at
+                            ).toLocaleDateString()
+                        }}
                     </p>
                     <div>
                         <div class="pb-1"><strong>Descrição</strong></div>

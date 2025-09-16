@@ -1,8 +1,13 @@
 import api from "@/api/axios";
 
 export default {
-    async listar() {
-        return api.get("/categorias");
+    async listar({apenasAtivos = false, pesquisa = null} = {}) {
+        return api.get("/categorias", {
+            params: {
+                ativo: apenasAtivos ? 1 : 0,
+                pesquisa,
+            },
+        });
     },
     async visualizar(id) {
         return api.get(`/categorias/${id}`);

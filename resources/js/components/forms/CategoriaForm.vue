@@ -4,6 +4,13 @@
             {{ modo === "create" ? "Criar Categoria" : "Editar Categoria" }}
         </h2>
 
+        <div
+            v-if="api_error"
+            class="text-red-800 border border-red-500 bg-red-100 !py-2 px-4 my-2 rounded-lg"
+        >
+            {{ api_error }}
+        </div>
+
         <v-form ref="form" v-model="valid" lazy-validation>
             <v-text-field
                 v-model="form.nome"
@@ -37,6 +44,7 @@
 
 <script>
 import CategoriaService from "@/services/CategoriaService"; // Ajuste o caminho conforme necessário
+import { handleApiFormErrors } from "../../utils/handleApiErrors";
 
 export default {
     props: {
@@ -49,6 +57,7 @@ export default {
             type: Object,
             default: () => ({}),
         },
+        api_error: null,
     },
     data() {
         return {
@@ -80,6 +89,7 @@ export default {
     },
     methods: {
         async salvar() {
+            this.api_error = null;
             if (this.$refs.form.validate()) {
                 this.loading = true;
                 try {
@@ -100,6 +110,8 @@ export default {
                         } categoria:`,
                         error
                     );
+                    const errorKeys = Object.keys(error.response.data.errors);
+                    this.api_error = handleApiFormErrors(errorKeys[0]);
                     this.$emit("erro", error);
                 } finally {
                     this.loading = false;
