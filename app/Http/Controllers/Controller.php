@@ -58,7 +58,7 @@ abstract class Controller
 
       case 1451: // FK constraint - delete
         return $this->errorResponse(
-          ['constraint' => 'This record cannot be deleted because it is in use.'],
+          ['constraint_delete' => 'This record cannot be deleted because it is in use.'],
           409
         );
 
