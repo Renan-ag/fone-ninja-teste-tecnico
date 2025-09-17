@@ -26,7 +26,6 @@
             v-model:page="page"
             loading-text="Carregando dados..."
             no-data-text="Nenhuma venda encontrada."
-
             class="elevation-1"
         >
             <template v-slot:item.status="{ item }">
@@ -44,6 +43,11 @@
             </template>
             <template v-slot:item.total="{ item }">
                 {{ parsePreco(item.total) }}
+            </template>
+            <template v-slot:item.data_venda="{ item }">
+                {{
+                    new Date(item.data_venda + "T00:00:00").toLocaleDateString()
+                }}
             </template>
             <template v-slot:item.lucro="{ item }">
                 {{ parsePreco(item.lucro) }}
@@ -67,7 +71,7 @@
                 <v-icon small @click="confirmarDeletar(item)">
                     mdi-delete
                 </v-icon>
-            </template>            
+            </template>
             <template v-slot:bottom>
                 <div class="text-center pt-2">
                     <v-pagination
@@ -94,11 +98,11 @@
                         <strong>Lucro:</strong>
                         {{ parsePreco(selectedItem.lucro) }}
                     </p>
-                     <p>
+                    <p>
                         <strong>Data de Venda:</strong>
                         {{
                             new Date(
-                                selectedItem.data_venda
+                                selectedItem.data_venda + "T00:00:00"
                             ).toLocaleDateString()
                         }}
                     </p>
@@ -225,7 +229,7 @@ export default {
                 this.vendas = this.vendas.filter(
                     (c) => c.id !== this.selectedItem.id
                 );
-                this.dialogDeletar = false;               
+                this.dialogDeletar = false;
             } catch (error) {
                 console.error("Erro ao deletar venda:", error);
                 alert("Erro ao deletar venda");

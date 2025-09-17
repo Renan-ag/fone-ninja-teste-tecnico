@@ -124,15 +124,23 @@
                 </template>
             </v-data-table>
 
-            <!-- Total -->
             <v-text-field
                 v-model="form.total"
                 label="Total"
+                type="number"
                 prefix="R$"
                 readonly
                 outlined
-                class="md:col-span-2"
                 :error-messages="api_error?.total"
+            />
+
+            <v-text-field
+                v-model="form.lucro"
+                label="Lucro"
+                type="number"
+                prefix="R$"
+                readonly
+                outlined
             />
         </v-form>
 
@@ -197,6 +205,7 @@ export default {
                 data_venda: "",
                 produtos: [],
                 total: 0,
+                lucro: 0,
             },
             parsePreco,
         };
@@ -205,12 +214,12 @@ export default {
         venda: {
             handler(newVenda) {
                 if (this.modo === "edit" && newVenda && newVenda.id) {
-                    console.log(newVenda);
                     this.form = {
                         cliente: newVenda.cliente || "",
                         status: newVenda.status || "concluída",
                         data_venda: newVenda.data_venda || "",
                         total: Number(newVenda.total) || 0,
+                        lucro: 0, // Será recalculado
                     };
 
                     this.form.produtos = (newVenda.venda_produtos || []).map(
@@ -226,18 +235,20 @@ export default {
                         produto_id: p.produto_id,
                         nome: p.produto.nome || "",
                         preco_unitario: Number(p.preco_unitario),
+                        custo_medio: Number(p.produto.custo_medio) || 0,
                         quantidade: Number(p.quantidade),
                         subtotal:
                             Number(p.preco_unitario) * Number(p.quantidade),
                     }));
+                    this.calcularTotal(); // Recalcula total e lucro
                 } else {
-                    // Reset para create
                     this.form = {
                         cliente: "",
                         status: "concluída",
                         produtos: [],
                         data_venda: "",
                         total: 0,
+                        lucro: 0,
                     };
                     this.produtosSelecionados = [];
                 }
@@ -272,6 +283,7 @@ export default {
                         id: produto.id,
                         nome: produto.nome,
                         preco_venda: Number(produto.preco_venda).toFixed(2),
+                        custo_medio: Number(produto.custo_medio).toFixed(2),
                     }));
             } catch (error) {
                 console.error("Erro ao carregar produtos:", error);
@@ -296,7 +308,8 @@ export default {
                     const novoProduto = {
                         produto_id: produto.id,
                         nome: produto.nome,
-                        preco_unitario: produto.preco_venda,
+                        preco_unitario: Number(produto.preco_venda),
+                        custo_medio: Number(produto.custo_medio),
                         quantidade: 1,
                         subtotal: Number(produto.preco_venda).toFixed(2),
                     };
@@ -327,6 +340,7 @@ export default {
                     id: item.produto_id,
                     nome: item.nome,
                     preco_venda: item.preco_unitario,
+                    custo_medio: item.custo_medio,
                 });
 
                 this.calcularTotal();
@@ -342,7 +356,15 @@ export default {
                 (sum, p) => sum + Number(p.subtotal),
                 0
             );
+            const lucro = this.produtosSelecionados.reduce(
+                (sum, p) =>
+                    sum +
+                    (Number(p.preco_unitario) - Number(p.custo_medio)) *
+                        Number(p.quantidade),
+                0
+            );
             this.form.total = total.toFixed(2);
+            this.form.lucro = lucro.toFixed(2);
             this.form.produtos = this.produtosSelecionados.map((p) => ({
                 produto_id: p.produto_id,
                 quantidade: Number(p.quantidade),
@@ -372,7 +394,7 @@ export default {
                         total: Number(this.form.total),
                         produtos: this.form.produtos,
                         data_venda: this.form.data_venda,
-                    };                    
+                    };
 
                     if (this.modo === "create") {
                         await VendaService.cadastrar(payload);
@@ -382,7 +404,6 @@ export default {
                             this.form.id || this.venda.id,
                             payload
                         );
-                        console.log(payload);
                         this.$emit("salvo");
                     }
                 } catch (error) {
@@ -395,7 +416,6 @@ export default {
 
                     if (error.response?.data?.errors) {
                         this.api_error = error.response.data.errors;
-                        console.log(error.response.data.errors);
                     }
 
                     this.$emit("erro", error);
