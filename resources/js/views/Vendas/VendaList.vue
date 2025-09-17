@@ -2,48 +2,58 @@
     <v-container>
         <div class="mb-4 flex justify-between gap-2 flex-col md:flex-row">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Produtos</h1>
+                <h1 class="text-3xl font-bold text-gray-800">Vendas</h1>
                 <p class="text-gray-600">
-                    Gerencie seus produtos de forma eficiente.
+                    Gerencie suas vendas de forma eficiente.
                 </p>
             </div>
 
             <v-btn
                 link
-                to="/produtos/novo"
+                to="/vendas/novo"
                 color="primary"
                 @click="abrirDialogCadastro"
             >
-                + Adicionar Produto
+                + Adicionar Venda
             </v-btn>
         </div>
 
         <v-data-table
             :headers="headers"
-            :items="produtos"
+            :items="vendas"
             :page.sync="page"
             :loading="loading"
             v-model:page="page"
             loading-text="Carregando dados..."
-            no-data-text="Nenhum produto encontrado."
+            no-data-text="Nenhuma venda encontrada."
+
             class="elevation-1"
         >
             <template v-slot:item.status="{ item }">
-                {{ item.ativo == 1 ? "Ativo" : "Inativo" }}
-            </template>
-            <template v-slot:item.preco_venda="{ item }">
                 {{
-                    Number(item.preco_venda).toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                    })
+                    String(item.status)
+                        .toLowerCase()
+                        .split(" ")
+                        .map(
+                            (palavra) =>
+                                palavra.charAt(0).toUpperCase() +
+                                palavra.slice(1)
+                        )
+                        .join(" ")
                 }}
             </template>
-            <template v-slot:item.custo_medio="{ item }">
+            <template v-slot:item.total="{ item }">
+                {{ parsePreco(item.total) }}
+            </template>
+            <template v-slot:item.lucro="{ item }">
+                {{ parsePreco(item.lucro) }}
+            </template>
+            <template v-slot:item.created_at="{ item }">
                 {{
-                    Number(item.custo_medio).toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
+                    new Date(item.created_at).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
                     })
                 }}
             </template>
@@ -57,8 +67,7 @@
                 <v-icon small @click="confirmarDeletar(item)">
                     mdi-delete
                 </v-icon>
-            </template>
-            <!-- Slot para customizar a paginação -->
+            </template>            
             <template v-slot:bottom>
                 <div class="text-center pt-2">
                     <v-pagination
@@ -72,39 +81,26 @@
         <!-- Dialog para visualização -->
         <v-dialog v-model="dialogVisualizar" max-width="500px">
             <v-card>
-                <v-card-title>Detalhes da Categoria</v-card-title>
+                <v-card-title>Detalhes da Venda</v-card-title>
                 <v-card-text class="flex flex-col gap-3">
                     <p><strong>ID:</strong> {{ selectedItem.id }}</p>
-                    <p><strong>Nome:</strong> {{ selectedItem.nome }}</p>
+                    <p><strong>Cliente:</strong> {{ selectedItem.cliente }}</p>
+                    <p><strong>Status:</strong> {{ selectedItem.status }}</p>
                     <p>
-                        <strong>Status:</strong>
-                        {{ selectedItem.ativo == 1 ? "Ativo" : "Inativo" }}
+                        <strong>Total da Venda:</strong>
+                        {{ parsePreco(selectedItem.total) }}
                     </p>
                     <p>
-                        <strong>Preço de Venda:</strong>
+                        <strong>Lucro:</strong>
+                        {{ parsePreco(selectedItem.lucro) }}
+                    </p>
+                     <p>
+                        <strong>Data de Venda:</strong>
                         {{
-                            Number(selectedItem.preco_venda).toLocaleString(
-                                "pt-BR",
-                                { style: "currency", currency: "BRL" }
-                            )
+                            new Date(
+                                selectedItem.data_venda
+                            ).toLocaleDateString()
                         }}
-                    </p>
-                    <p>
-                        <strong>Custo Médio:</strong>
-                        {{
-                            Number(selectedItem.custo_medio).toLocaleString(
-                                "pt-BR",
-                                { style: "currency", currency: "BRL" }
-                            )
-                        }}
-                    </p>
-                    <p>
-                        <strong>Quantidade em Estoque:</strong>
-                        {{ selectedItem.estoque }}
-                    </p>
-                    <p>
-                        <strong>Categoria:</strong>
-                        {{ selectedItem.categoria.nome }}
                     </p>
                     <p>
                         <strong>Data de Criação:</strong>
@@ -122,16 +118,19 @@
                             ).toLocaleDateString()
                         }}
                     </p>
-
-                    <div>
-                        <div class="pb-1"><strong>Descrição</strong></div>
-                        <textarea
-                            readonly
-                            rows="3"
-                            class="!bg-gray-100 w-full rounded-md !px-2 !py-1"
-                            >{{ selectedItem.descricao }}</textarea
-                        >
-                    </div>
+                    <v-data-table
+                        :headers="[
+                            { title: 'Nome', value: 'produto.nome' },
+                            { title: 'Quantidade', value: 'quantidade' },
+                            { title: 'Preço', value: 'preco_unitario' },
+                        ]"
+                        :items="selectedItem.venda_produtos"
+                        hide-default-footer
+                    >
+                        <template v-slot:item.preco_unitario="{ item }">
+                            {{ parsePreco(item.preco_unitario) }}
+                        </template>
+                    </v-data-table>
                 </v-card-text>
                 <v-card-actions>
                     <v-btn
@@ -149,8 +148,8 @@
             <v-card>
                 <v-card-title>Confirmação</v-card-title>
                 <v-card-text>
-                    Tem certeza que deseja deletar o produto "{{
-                        selectedItem.nome
+                    Tem certeza que deseja deletar a venda "{{
+                        selectedItem.id
                     }}"?
                 </v-card-text>
                 <v-card-actions>
@@ -168,7 +167,8 @@
 </template>
 
 <script>
-import ProdutosService from "@/services/ProdutoService";
+import VendaService from "../../services/VendaService";
+import { parsePreco } from "../../utils/parsers";
 
 export default {
     data() {
@@ -176,37 +176,37 @@ export default {
             page: 1,
             totalPages: 1,
             loading: false,
-            dialogVisualizar: false, // Inicializado como false
-            dialogDeletar: false, // Inicializado como false
+            dialogVisualizar: false,
+            dialogDeletar: false,
             selectedItem: {},
             headers: [
                 { title: "ID", value: "id" },
-                { title: "Nome", value: "nome" },
-                { title: "Categoria", value: "categoria.nome" },
+                { title: "Cliente", value: "cliente" },
+                { title: "Total", value: "total" },
+                { title: "Lucro", value: "lucro" },
+                { title: "Data da Venda", value: "created_at" },
                 { title: "Status", value: "status" },
-                { title: "Estoque", value: "estoque" },
-                { title: "Preço", value: "preco_venda" },
-                { title: "Custo", value: "custo_medio" },
                 { title: "Ações", value: "actions", sortable: false },
             ],
-            produtos: [],
+            vendas: [],
+            parsePreco,
         };
     },
     async created() {
-        await this.carregarProdutos();
+        await this.carregarVendas();
     },
     methods: {
-        async carregarProdutos() {
+        async carregarVendas() {
             try {
                 this.loading = true;
-                const response = await ProdutosService.listar();
+                const response = await VendaService.listar();
 
-                this.produtos = response.data.data.data;
+                this.vendas = response.data.data.data;
                 this.page = response.data.data.current_page;
                 this.totalPages = response.data.data.last_page;
             } catch (error) {
-                console.error("Erro ao carregar produtos:", error);
-                alert("Erro ao carregar produtos");
+                console.error("Erro ao carregar vendas:", error);
+                alert("Erro ao carregar vendas");
             } finally {
                 this.loading = false;
             }
@@ -221,26 +221,22 @@ export default {
         },
         async deletarItem() {
             try {
-                await ProdutosService.excluir(this.selectedItem.id); // Supondo que o serviço tenha um método deletar
-                this.produtos = this.produtos.filter(
+                await VendaService.excluir(this.selectedItem.id);
+                this.vendas = this.vendas.filter(
                     (c) => c.id !== this.selectedItem.id
                 );
-                this.dialogDeletar = false;
-
-                this.$snackbar.show({
-                    message: "Produto deletada com sucesso",
-                    color: "success",
-                });
+                this.dialogDeletar = false;               
             } catch (error) {
-                console.error("Erro ao deletar produto:", error);
+                console.error("Erro ao deletar venda:", error);
+                alert("Erro ao deletar venda");
             }
         },
         editar(item) {
-            this.$router.push(`/produtos/editar/${item.id}`);
+            this.$router.push(`/vendas/editar/${item.id}`);
         },
-        abrirDialogCadastro(modo, produto = null) {
+        abrirDialogCadastro(modo, venda = null) {
             this.modoAtual = modo;
-            this.selectedItem = produto || null;
+            this.selectedItem = venda || null;
             this.dialog = true;
         },
         fecharDialog() {

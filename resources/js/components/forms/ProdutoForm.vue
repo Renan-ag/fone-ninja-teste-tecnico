@@ -4,13 +4,6 @@
             {{ modo === "create" ? "Criar Produto" : "Editar Produto" }}
         </h2>
 
-        <div
-            v-if="api_error"
-            class="text-red-800 border border-red-500 bg-red-100 !py-2 px-4 my-2 rounded-lg"
-        >
-            {{ api_error }}
-        </div>
-
         <v-form
             ref="form"
             v-model="valid"

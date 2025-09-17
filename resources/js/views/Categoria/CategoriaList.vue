@@ -25,6 +25,7 @@
             :loading="loading"
             v-model:page="page"
             loading-text="Carregando dados..."
+            no-data-text="Nenhuma categoria encontrada."
             class="elevation-1"
         >
             <template v-slot:item.status="{ item }">

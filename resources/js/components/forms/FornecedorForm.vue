@@ -54,7 +54,7 @@
             <v-text-field
                 v-model="form.endereco"
                 label="Endereço"
-                type="text"                
+                type="text"
                 :rules="[
                     (v) =>
                         v.length <= 500 ||
@@ -157,6 +157,7 @@ export default {
                 try {
                     const payload = {
                         ...this.form,
+                        telefone: this.form.telefone.replace(/\D/g, ""),
                     };
                     if (this.modo === "create") {
                         await FornecedorService.cadastrar(payload);

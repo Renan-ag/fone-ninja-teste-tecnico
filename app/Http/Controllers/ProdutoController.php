@@ -36,6 +36,25 @@ class ProdutoController extends Controller
     parent::__construct($produto);
   }
 
+  public function index(Request $request): JsonResponse
+  {
+    $apenasAtivo = $request->input('ativo', false);
+    $pesquisa = $request->input('pesquisa', false);
+    $perPage = $request->input('per_page', 12);
+    $query = $this->model::query()->with($this->relationships);
+    if ($apenasAtivo) {
+      $query->where('ativo', 1);
+    }
+
+    if ($pesquisa) {
+      $query->where('nome', 'like', "%{$pesquisa}%");
+    }
+
+    $resources = $query->paginate($perPage);
+
+    return $this->successResponse($resources, 'Recursos listados com sucesso');
+  }
+
   public function update(Request $request, $id): JsonResponse
   {
     try {

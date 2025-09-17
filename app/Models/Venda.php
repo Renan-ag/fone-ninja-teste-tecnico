@@ -19,6 +19,7 @@ class Venda extends Model
     'total',
     'lucro',
     'status',
+    'data_venda',
   ];
 
   // Define os campos que devem ser tratados como tipos específicos
@@ -33,6 +34,6 @@ class Venda extends Model
 
   public function vendaProdutos()
   {
-    return $this->hasMany(VendaProduto::class, 'venda_id', 'id');
+    return $this->hasMany(VendaProduto::class, 'venda_id');
   }
 }
