@@ -111,3 +111,63 @@ Implemente as seguintes telas:
   - Exibir mensagens de sucesso ou erro (ex: “Estoque insuficiente”).
 
 ⚡ Diferencial: Tela para listar todas as vendas e compras.
+
+# Como executar o projeto
+Este projeto utiliza **Laravel** no backend, **Vue 3** no frontend (com Vite) e **MySQL** como banco de dados via **Docker Compose**.  
+
+## 🚀 Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+- [PHP 8.2+](https://www.php.net/downloads)  
+- [Composer](https://getcomposer.org/)  
+- [Node.js 18+](https://nodejs.org/en/)  
+- [NPM](https://www.npmjs.com/) ou [Yarn](https://yarnpkg.com/)  
+- [Docker](https://www.docker.com/) e [Docker Compose](https://docs.docker.com/compose/)  
+
+## ⚙️ Instalação
+1. **Instale as dependências do backend (Laravel)**
+```bash
+composer install
+```
+2. **Instale as dependências do frontend (Vue)**
+```bash
+npm install
+```
+3. **Configure o arquivo `.env`**
+```bash
+Crie uma cópia do arquivo `.env.example` e renomeie para `.env`.  
+```
+
+## 🐳 Subindo o Banco de Dados com Docker
+1. **Inicie os containers**
+```bash
+docker-compose up -d
+```
+2. **Aplique as migrações do banco de dados**
+```bash
+php artisan migrate
+```
+
+## ▶️ Executando o Projeto
+1. **Inicie o servidor backend (Laravel)**
+```bash
+php artisan serve
+```
+2. **Inicie o servidor frontend (Vue)**
+```bash
+npm run dev
+```
+
+## 🔗 Acesso
+- **Backend**: `http://localhost:8000`
+- **Frontend**: `http://localhost:3000`
+- **phpMyAdmin**: `http://localhost:8080`
+- **Banco de Dados / Diagrama**: `https://dbdiagram.io/d/ERP-estoque-68c2385161a46d388e8353f0`
+
+
+
+
+
+
+
