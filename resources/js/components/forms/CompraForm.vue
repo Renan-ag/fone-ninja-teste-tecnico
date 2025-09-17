@@ -1,7 +1,7 @@
 <template>
     <div>
         <h2 class="mb-4 text-2xl font-bold">
-            {{ modo === "create" ? "Criar Venda" : "Editar Venda" }}
+            {{ modo === "create" ? "Criar Compra" : "Editar Compra" }}
         </h2>
 
         <v-form
@@ -10,35 +10,23 @@
             lazy-validation
             class="form-container flex flex-col md:grid md:grid-cols-2 gap-2"
         >
-            <v-text-field
-                v-model="form.cliente"
-                label="Nome do Cliente"
-                :rules="[(v) => !!v || 'Nome do cliente é obrigatório']"
+            <v-autocomplete
+                v-model="form.fornecedor_id"
+                :items="fornecedores"
+                item-title="nome"
+                item-value="id"
+                label="Fornecedor"
+                :rules="[(v) => !!v || 'Fornecedor é obrigatório']"
                 required
                 outlined
+                :loading="loadingFornecedores"
+                :search-input.sync="searchFornecedor"
+                placeholder="Digite para buscar um fornecedor"
+                no-data-text="Nenhum fornecedor encontrado"
+                prepend-inner-icon="mdi-magnify"
+                @update:search-input="debouncedSearchFornecedor"
                 class="md:col-span-2"
-                :error-messages="api_error?.cliente"
-            />
-
-            <v-select
-                v-model="form.status"
-                :items="statusOptions"
-                item-title="text"
-                item-value="value"
-                label="Status"
-                :rules="[(v) => !!v || 'Status é obrigatório']"
-                required
-                outlined
-                :error-messages="api_error?.status"
-            />
-
-            <v-text-field
-                v-model="form.data_venda"
-                label="Data da Venda"
-                type="date"
-                required
-                outlined
-                :error-messages="api_error?.data_venda"
+                :error-messages="api_error?.fornecedor_id"
             />
 
             <v-data-table
@@ -79,8 +67,30 @@
                 <template v-slot:item.subtotal="{ item }">
                     {{ parsePreco(item.preco_unitario * item.quantidade) }}
                 </template>
-                <template v-slot:item.preco_unitario="{ item }">
-                    {{ parsePreco(item.preco_unitario) }}
+                <template v-slot:item.preco_unitario="{ item, index }">
+                    <v-text-field
+                        v-model.number="item.preco_unitario"
+                        type="number"
+                        min="1"
+                        class="pt-4"
+                        :rules="[
+                            (v) => !!v || 'Preço unitário é obrigatório',
+                            (v) =>
+                                v > 0 ||
+                                'Preço unitário deve ser maior que zero',
+                        ]"
+                        dense
+                        outlined
+                        :error-messages="
+                            api_error &&
+                            Object.keys(api_error).includes(
+                                `produtos.${index}.preco_unitario`
+                            )
+                                ? api_error[`produtos.${index}.preco_unitario`]
+                                : []
+                        "
+                        @input="calcularTotal"
+                    />
                 </template>
                 <template v-slot:item.acoes="{ item }">
                     <v-btn
@@ -150,7 +160,8 @@
 
 <script>
 import ProdutoService from "@/services/ProdutoService";
-import VendaService from "@/services/VendaService";
+import FornecedorService from "@/services/FornecedorService";
+import CompraService from "@/services/CompraService";
 import debounce from "lodash/debounce";
 import { parsePreco } from "../../utils/parsers";
 
@@ -161,7 +172,7 @@ export default {
             default: "create",
             validator: (value) => ["create", "edit"].includes(value),
         },
-        venda: {
+        compra: {
             type: Object,
             default: () => ({}),
         },
@@ -171,15 +182,14 @@ export default {
             valid: true,
             loading: false,
             loadingProdutos: false,
+            loadingFornecedores: false,
             searchProduto: null,
+            searchFornecedor: null,
             produtos: [],
+            fornecedores: [],
             produtosSelecionados: [],
             produtoSelecionado: null,
             api_error: {},
-            statusOptions: [
-                { text: "Pendente", value: "pendente" },
-                { text: "Concluída", value: "concluída" },
-            ],
             produtoHeaders: [
                 { title: "Nome", value: "nome", sortable: false },
                 {
@@ -192,9 +202,7 @@ export default {
                 { title: "Ações", value: "acoes", sortable: false },
             ],
             form: {
-                cliente: "",
-                status: "concluída",
-                data_venda: "",
+                fornecedor_id: null,
                 produtos: [],
                 total: 0,
             },
@@ -202,41 +210,34 @@ export default {
         };
     },
     watch: {
-        venda: {
-            handler(newVenda) {
-                if (this.modo === "edit" && newVenda && newVenda.id) {
-                    console.log(newVenda);
+        compra: {
+            handler(newCompra) {
+                if (this.modo === "edit" && newCompra && newCompra.id) {
                     this.form = {
-                        cliente: newVenda.cliente || "",
-                        status: newVenda.status || "concluída",
-                        data_venda: newVenda.data_venda || "",
-                        total: Number(newVenda.total) || 0,
+                        fornecedor_id: newCompra.fornecedor_id || null,
+                        total: Number(newCompra.total) || 0,
                     };
-
-                    this.form.produtos = (newVenda.venda_produtos || []).map(
+                    this.produtosSelecionados = (
+                        newCompra.compra_produtos || []
+                    ).map((p) => ({
+                        produto_id: p.produto_id,
+                        nome: p.produto.nome || "",
+                        preco_unitario: Number(p.preco_unitario).toFixed(2),
+                        quantidade: Number(p.quantidade),
+                        subtotal:
+                            Number(p.preco_unitario) * Number(p.quantidade),
+                    }));
+                    this.form.produtos = (newCompra.compra_produtos || []).map(
                         (p) => ({
                             produto_id: p.produto_id,
                             quantidade: Number(p.quantidade),
                             preco_unitario: Number(p.preco_unitario),
                         })
                     );
-                    this.produtosSelecionados = (
-                        newVenda.venda_produtos || []
-                    ).map((p) => ({
-                        produto_id: p.produto_id,
-                        nome: p.produto.nome || "",
-                        preco_unitario: Number(p.preco_unitario),
-                        quantidade: Number(p.quantidade),
-                        subtotal:
-                            Number(p.preco_unitario) * Number(p.quantidade),
-                    }));
                 } else {
-                    // Reset para create
                     this.form = {
-                        cliente: "",
-                        status: "concluída",
+                        fornecedor_id: null,
                         produtos: [],
-                        data_venda: "",
                         total: 0,
                     };
                     this.produtosSelecionados = [];
@@ -247,12 +248,38 @@ export default {
         },
     },
     created() {
+        this.carregarFornecedores();
         this.carregarProdutos();
     },
     methods: {
         debouncedSearchProduto: debounce(function (search) {
             this.carregarProdutos(search);
         }, 300),
+        debouncedSearchFornecedor: debounce(function (search) {
+            this.carregarFornecedores(search);
+        }, 300),
+        async carregarFornecedores(search = null) {
+            this.loadingFornecedores = true;
+            try {
+                const response = await FornecedorService.listar({
+                    pesquisa: search,
+                    apenasAtivos: true,
+                });
+
+                this.fornecedores = response.data.data.data.map(
+                    (fornecedor) => ({
+                        id: fornecedor.id,
+                        nome: fornecedor.nome,
+                    })
+                );
+            } catch (error) {
+                console.error("Erro ao carregar fornecedores:", error);
+                alert("Erro ao carregar fornecedores");
+                this.$emit("erro", error);
+            } finally {
+                this.loadingFornecedores = false;
+            }
+        },
         async carregarProdutos(search = null) {
             this.loadingProdutos = true;
             try {
@@ -263,7 +290,6 @@ export default {
                 const selectedProductsId = this.produtosSelecionados.map(
                     (produto) => produto.produto_id
                 );
-
                 this.produtos = response.data.data.data
                     .filter(
                         (produto) => !selectedProductsId.includes(produto.id)
@@ -271,7 +297,7 @@ export default {
                     .map((produto) => ({
                         id: produto.id,
                         nome: produto.nome,
-                        preco_venda: Number(produto.preco_venda).toFixed(2),
+                        preco_compra: Number(produto.preco_compra).toFixed(2),
                     }));
             } catch (error) {
                 console.error("Erro ao carregar produtos:", error);
@@ -286,7 +312,6 @@ export default {
                 const produto = this.produtos.find(
                     (p) => p.id === this.produtoSelecionado
                 );
-
                 if (
                     produto &&
                     !this.produtosSelecionados.some(
@@ -296,19 +321,18 @@ export default {
                     const novoProduto = {
                         produto_id: produto.id,
                         nome: produto.nome,
-                        preco_unitario: produto.preco_venda,
+                        preco_unitario: 0,
                         quantidade: 1,
-                        subtotal: Number(produto.preco_venda).toFixed(2),
+                        subtotal: Number(produto.preco_compra).toFixed(2),
                     };
                     this.produtosSelecionados.push(novoProduto);
                     this.produtos = this.produtos.filter(
                         (p) => p.id !== produto.id
                     );
-
                     this.form.produtos.push({
                         produto_id: produto.id,
                         quantidade: 1,
-                        preco_unitario: Number(produto.preco_venda),
+                        preco_unitario: 0,
                     });
                     this.calcularTotal();
                 }
@@ -326,9 +350,8 @@ export default {
                 this.produtos.push({
                     id: item.produto_id,
                     nome: item.nome,
-                    preco_venda: item.preco_unitario,
+                    preco_compra: item.preco_unitario,
                 });
-
                 this.calcularTotal();
             }
         },
@@ -354,7 +377,6 @@ export default {
                 `produtos.${index}.quantidade`
             );
             if (!keyValidation) return;
-
             if (this.api_error[`produtos.${index}.quantidade`])
                 delete this.api_error[`produtos.${index}.quantidade`];
         },
@@ -367,37 +389,35 @@ export default {
                 this.loading = true;
                 try {
                     const payload = {
-                        cliente: this.form.cliente,
-                        status: this.form.status,
+                        fornecedor_id: this.form.fornecedor_id,
                         total: Number(this.form.total),
                         produtos: this.form.produtos,
-                        data_venda: this.form.data_venda,
-                    };                    
+                    };
+                    console.log(
+                        "JSON enviado:",
+                        JSON.stringify(payload, null, 2)
+                    );
 
                     if (this.modo === "create") {
-                        await VendaService.cadastrar(payload);
+                        await CompraService.cadastrar(payload);
                         this.$emit("salvo");
                     } else {
-                        await VendaService.atualizar(
-                            this.form.id || this.venda.id,
+                        await CompraService.atualizar(
+                            this.form.id || this.compra.id,
                             payload
                         );
-                        console.log(payload);
                         this.$emit("salvo");
                     }
                 } catch (error) {
                     console.error(
                         `Erro ao ${
                             this.modo === "create" ? "criar" : "atualizar"
-                        } venda:`,
+                        } compra:`,
                         error
                     );
-
                     if (error.response?.data?.errors) {
                         this.api_error = error.response.data.errors;
-                        console.log(error.response.data.errors);
                     }
-
                     this.$emit("erro", error);
                 } finally {
                     this.loading = false;

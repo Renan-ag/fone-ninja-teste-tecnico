@@ -8,6 +8,9 @@ import FornecedoresList from "../views/Fornecedores/FornecedoresList.vue";
 import FornecedoresEdit from "../views/Fornecedores/FornecedoresEdit.vue";
 import VendaList from "../views/Vendas/VendaList.vue";
 import VendaEdit from "../views/Vendas/VendaEdit.vue";
+import CompraList from "../views/Compras/CompraList.vue";
+import CompraEdit from "../views/Compras/CompraEdit.vue";
+
 
 const routes = [
     { path: "/", component: Home },
@@ -23,6 +26,9 @@ const routes = [
     { path: "/vendas", component: VendaList },
     { path: "/vendas/novo", component: VendaEdit },
     { path: "/vendas/editar/:id", component: VendaEdit },
+    { path: "/compras", component: CompraList },
+    { path: "/compras/novo", component: CompraEdit },
+    { path: "/compras/editar/:id", component: CompraEdit },
 ];
 
 const router = createRouter({

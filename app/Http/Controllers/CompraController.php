@@ -112,9 +112,7 @@ class CompraController extends Controller
             $estoqueAtual = $produtoModel->estoque;
             $custoMedioAtual = $produtoModel->custo_medio ?? 0;
 
-
             $produtoModel->decrement('estoque', $compraProduto->quantidade);
-
 
             if ($estoqueAtual > $compraProduto->quantidade) {
               $novoCustoMedio = (($estoqueAtual * $custoMedioAtual) - ($compraProduto->quantidade * $compraProduto->preco_unitario)) /
@@ -126,7 +124,7 @@ class CompraController extends Controller
           }
 
           // Excluir os produtos antigos
-          $compra->compraProdutos()->delete();
+          $compra->compraProdutos()->withTrashed()->forceDelete();;
 
           // Adicionar novos produtos e atualizar estoque/custo médio
           foreach ($request->produtos as $produto) {
@@ -137,15 +135,12 @@ class CompraController extends Controller
               'preco_unitario' => $produto['preco_unitario'],
             ]);
 
-            // Atualiza estoque e custo médio
             $produtoModel = Produto::findOrFail($produto['produto_id']);
             $estoqueAtual = $produtoModel->estoque ?? 0;
             $custoMedioAtual = $produtoModel->custo_medio ?? 0;
 
-            // Incrementa o estoque
             $produtoModel->increment('estoque', $produto['quantidade']);
 
-            // Calcula o novo custo médio
             $novoCustoMedio = ($estoqueAtual * $custoMedioAtual + $produto['quantidade'] * $produto['preco_unitario']) /
               ($estoqueAtual + $produto['quantidade']);
             $produtoModel->update(['custo_medio' => round($novoCustoMedio, 2)]);

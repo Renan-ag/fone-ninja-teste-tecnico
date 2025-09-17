@@ -2,31 +2,30 @@
     <v-container>
         <div class="mb-4 flex justify-between gap-2 flex-col md:flex-row">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Vendas</h1>
+                <h1 class="text-3xl font-bold text-gray-800">Compras</h1>
                 <p class="text-gray-600">
-                    Gerencie suas vendas de forma eficiente.
+                    Gerencie suas compras de forma eficiente.
                 </p>
             </div>
 
             <v-btn
                 link
-                to="/vendas/novo"
+                to="/compras/novo"
                 color="primary"
                 @click="abrirDialogCadastro"
             >
-                + Adicionar Venda
+                + Adicionar Compra
             </v-btn>
         </div>
 
         <v-data-table
             :headers="headers"
-            :items="vendas"
+            :items="compras"
             :page.sync="page"
             :loading="loading"
             v-model:page="page"
             loading-text="Carregando dados..."
-            no-data-text="Nenhuma venda encontrada."
-
+            no-data-text="Nenhuma compra encontrada."
             class="elevation-1"
         >
             <template v-slot:item.status="{ item }">
@@ -67,7 +66,7 @@
                 <v-icon small @click="confirmarDeletar(item)">
                     mdi-delete
                 </v-icon>
-            </template>            
+            </template>
             <template v-slot:bottom>
                 <div class="text-center pt-2">
                     <v-pagination
@@ -84,24 +83,11 @@
                 <v-card-title>Detalhes da Venda</v-card-title>
                 <v-card-text class="flex flex-col gap-3">
                     <p><strong>ID:</strong> {{ selectedItem.id }}</p>
-                    <p><strong>Cliente:</strong> {{ selectedItem.cliente }}</p>
-                    <p><strong>Status:</strong> {{ selectedItem.status }}</p>
+                    <p><strong>Fornecedor:</strong> {{ selectedItem.fornecedor.nome }}</p>
                     <p>
                         <strong>Total da Venda:</strong>
                         {{ parsePreco(selectedItem.total) }}
-                    </p>
-                    <p>
-                        <strong>Lucro:</strong>
-                        {{ parsePreco(selectedItem.lucro) }}
-                    </p>
-                     <p>
-                        <strong>Data de Venda:</strong>
-                        {{
-                            new Date(
-                                selectedItem.data_venda
-                            ).toLocaleDateString()
-                        }}
-                    </p>
+                    </p>                                        
                     <p>
                         <strong>Data de Criação:</strong>
                         {{
@@ -124,7 +110,7 @@
                             { title: 'Quantidade', value: 'quantidade' },
                             { title: 'Preço', value: 'preco_unitario' },
                         ]"
-                        :items="selectedItem.venda_produtos"
+                        :items="selectedItem.compra_produtos"
                         hide-default-footer
                     >
                         <template v-slot:item.preco_unitario="{ item }">
@@ -148,7 +134,7 @@
             <v-card>
                 <v-card-title>Confirmação</v-card-title>
                 <v-card-text>
-                    Tem certeza que deseja deletar a venda "{{
+                    Tem certeza que deseja deletar a compra "{{
                         selectedItem.id
                     }}"?
                 </v-card-text>
@@ -167,7 +153,7 @@
 </template>
 
 <script>
-import VendaService from "../../services/VendaService";
+import CompraService from "@/services/CompraService";
 import { parsePreco } from "../../utils/parsers";
 
 export default {
@@ -181,32 +167,30 @@ export default {
             selectedItem: {},
             headers: [
                 { title: "ID", value: "id" },
-                { title: "Cliente", value: "cliente" },
+                { title: "Fornecedor", value: "fornecedor.nome" },
                 { title: "Total", value: "total" },
-                { title: "Lucro", value: "lucro" },
-                { title: "Data da Venda", value: "data_venda" },
-                { title: "Status", value: "status" },
+                { title: "Data", value: "created_at" },
                 { title: "Ações", value: "actions", sortable: false },
             ],
-            vendas: [],
+            compras: [],
             parsePreco,
         };
     },
     async created() {
-        await this.carregarVendas();
+        await this.carregarCompras();
     },
     methods: {
-        async carregarVendas() {
+        async carregarCompras() {
             try {
                 this.loading = true;
-                const response = await VendaService.listar();
+                const response = await CompraService.listar();
 
-                this.vendas = response.data.data.data;
+                this.compras = response.data.data.data;
                 this.page = response.data.data.current_page;
                 this.totalPages = response.data.data.last_page;
             } catch (error) {
-                console.error("Erro ao carregar vendas:", error);
-                alert("Erro ao carregar vendas");
+                console.error("Erro ao carregar compras:", error);
+                alert("Erro ao carregar compras");
             } finally {
                 this.loading = false;
             }
@@ -221,22 +205,22 @@ export default {
         },
         async deletarItem() {
             try {
-                await VendaService.excluir(this.selectedItem.id);
-                this.vendas = this.vendas.filter(
+                await CompraService.excluir(this.selectedItem.id);
+                this.compras = this.compras.filter(
                     (c) => c.id !== this.selectedItem.id
                 );
-                this.dialogDeletar = false;               
+                this.dialogDeletar = false;
             } catch (error) {
-                console.error("Erro ao deletar venda:", error);
-                alert("Erro ao deletar venda");
+                console.error("Erro ao deletar compra:", error);
+                alert("Erro ao deletar compra");
             }
         },
         editar(item) {
-            this.$router.push(`/vendas/editar/${item.id}`);
+            this.$router.push(`/compras/editar/${item.id}`);
         },
-        abrirDialogCadastro(modo, venda = null) {
+        abrirDialogCadastro(modo, compra = null) {
             this.modoAtual = modo;
-            this.selectedItem = venda || null;
+            this.selectedItem = compra || null; 
             this.dialog = true;
         },
         fecharDialog() {
